@@ -37,7 +37,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 
-
 def logprint(text):
     text = f"[cyan][+][/cyan] [blue]{text}[/blue]"
     console.print(text)
@@ -209,7 +208,7 @@ def cleanup(driver, progress):
     profile_slots = soup.find_all("div", class_="_55wp _5909 _5pxa _8yo0")
 
     element = driver.find_element(
-        By.XPATH, "/html/body/div[1]/div/div[4]/div/div[1]/div[1]"
+        By.XPATH, '//div[contains(concat(" ",normalize-space(@class)," ")," timeline ")]/div/div[contains(concat(" ",normalize-space(@class)," ")," _2pit ")]/div'
     )
     driver.execute_script(
         """
@@ -222,7 +221,7 @@ def cleanup(driver, progress):
     for slot in profile_slots:
 
         element = driver.find_element(
-            By.XPATH, "/html/body/div[1]/div/div[4]/div/div[1]/div[1]/div[1]"
+            By.XPATH, '//div[contains(concat(" ",normalize-space(@class)," ")," timeline ")]/div/div[contains(concat(" ",normalize-space(@class)," ")," _2pit ")]/div'
         )
         driver.execute_script(
             """
@@ -245,11 +244,39 @@ def cleanup(driver, progress):
     logprint("Waiting a bit...")
     sleep(5)
 
+# function to wait for random time
+def random_wait(a=0, b=None):
+    if b == None:
+        time.sleep(a)
+    else:
+        time.sleep(random.randrange(a, b))
+
+def scroll_down_little(driver, n):
+    #html = driver.find_elements(By.TAG_NAME, "html")
+    WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.TAG_NAME, "html")))
+    html = driver.find_element(By.TAG_NAME, "html")
+    random_wait(3, 7)
+    html.send_keys(Keys.PAGE_DOWN)
+    seemorefriends = driver.find_element(By.XPATH, './/*[@id="m_more_friends"]')
+    html.send_keys(Keys.PAGE_DOWN)
+    random_wait(3, 7)
+    seemorefriends.click()
 
 def scroll_down(driver, progress):
     logprint("Scrolling to the bottom")
     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    clicks = driver.find_elements(By.XPATH, '//*[@id="m_more_friends"]')
+    for click in clicks:
+       click = click.click()
+       time.sleep(15)
 
+def scroll_down_to_bottom(driver, m):
+    #html = driver.find_elements(By.TAG_NAME, "html")
+    WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.TAG_NAME, "html")))
+    htmls = driver.find_element(By.TAG_NAME, "html")
+    for i in range(m):
+        htmls.send_keys(Keys.PAGE_DOWN)
+        random_wait(3, 7)
 
 def wait(range_start, range_stop, progress):
     wait_time = randint(range_start, range_stop)
@@ -283,6 +310,7 @@ def do_scrape(driver, email, password, user_to_scrape, outfile_path, args):
         logprint("Starting...\n")
         
         pbar = progress.add_task("[blue]Total progress", total=total_friends)
+        #scroll_down_to_bottom(driver, 25)
         progress.update(pbar, advance=0)
 
         total_pages = ceil(total_friends / 36)
@@ -296,10 +324,13 @@ def do_scrape(driver, email, password, user_to_scrape, outfile_path, args):
                 logprint(f"Executing command: '{args.cmd}'")
                 logprint(f"Command exited with status code '{system(args.cmd)}'")
                 
-            wait(240*sleep_multiplier, 320*sleep_multiplier, progress)
+            #wait(240*sleep_multiplier, 320*sleep_multiplier, progress)
+            wait(24*sleep_multiplier, 32*sleep_multiplier, progress)
             scroll_down(driver, progress)
+            #getURLfriend(driver, 5)
             remove_visible(driver, progress)
             cleanup(driver, progress)
+
 
 
 def main():
